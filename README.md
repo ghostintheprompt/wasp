@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/wasp_logo.png" alt="WASP Logo" width="200">
+  <img src="assets/wasp_logo.png" alt="WASP Logo" width="500">
 </p>
 
 # WASP: WiFi Adapter Security Protocol
