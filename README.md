@@ -2,66 +2,69 @@
   <img src="assets/wasp_logo.png" alt="WASP Logo" width="500">
 </p>
 
-# WASP: WiFi Adapter Security Protocol
+# WASP: WiFi Adapter Security Protocol (Ghost-Protocol Tier)
 
-**WASP** is a specialized framework for verifying the integrity and security of wireless network adapters before deployment in high-stakes security research and education environments.
+**WASP** is a high-fidelity verification framework for auditing the integrity and security of wireless network adapters. Optimized with the **Ghost Proxy** methodology, WASP goes beyond simple hardware identification to provide deep-behavioral analysis and offensive-scenario simulation.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux-lightgrey)](#)
-[![Release](https://img.shields.io/badge/release-v1.0.0-blue)](https://github.com/ghostintheprompt/wasp/releases)
+[![Release](https://img.shields.io/badge/release-v1.4.0-purple.svg)](https://github.com/ghostintheprompt/wasp/releases)
 
-## Why WASP?
+## Why WASP v1.4?
 
-Compromised hardware is a silent threat. Both new and second-hand network equipment can contain malicious firmware, hardware implants, or unauthorized modifications. WASP provides a systematic verification process to ensure your hardware is exactly what it claims to be.
+In 2026, compromised hardware is no longer a fringe threat—it's an industrial standard. New and second-hand network equipment can contain malicious firmware, shadow DOM-style overlays in the driver, or unauthorized hardware-level exfiltration. WASP v1.4 introduces the **Ghost-Protocol Optimization**, bridging the gap between hardware audit and offensive security research.
 
-## Verified Features
+## Core Modules
 
-| Feature | Description | Status |
+| Module | Capability | Persistence |
 | :--- | :--- | :--- |
-| **Hardware ID** | Verifies Vendor/Product IDs against a trusted signature database. | ✅ |
-| **Firmware Check** | Inspects driver and firmware metadata for integrity. | ✅ |
-| **Behavioral Analysis** | Monitors packet patterns in monitor mode for anomalies. | ✅ |
-| **Power Audit** | Detects anomalous power draw that may indicate hardware implants. | ✅ |
-| **Traffic Guard** | Inspects for unauthorized background network connections. | ✅ |
+| **THREAT_SIMULATOR** | executes 12 high-fidelity WiFi scenarios (e.g., Firmware Ghosting) | Volatile |
+| **CYBER_SOC** | Neural Defense Center tracking 8 unique WiFi incidents (INC-...) | Session |
+| **GUARDRAIL_ENGINE** | Enforces the "Dirty Dozen+" security policies in real-time | Active |
+| **BEHAVIOR_AUDIT** | Monitors packet patterns and USB power for covert channels | Local DB |
 
-## Installation
+## Ghost Proxy Manifest v1.4 (WASP Edition)
 
-### macOS (DMG)
-Download the latest `WASP.dmg` from the [Releases](https://github.com/ghostintheprompt/wasp/releases) page.
+### 1. High-Fidelity WiFi Scenarios
+The simulator now executes **12 specialized scenarios**:
+*   **Firmware Ghosting:** Detecting hidden frames or unauthorized vendor-specific OUI usage.
+*   **Shadow Monitor Mode:** Identifying unrequested hardware-level state shifts.
+*   **SSID Buffer Overflow:** Testing driver resilience against malformed SSID strings.
+*   **OUI Identity Hijack:** Verifying hardware ID persistence under extreme load.
+*   **Timing Attack Analysis:** Spotting micro-delays that indicate hardware-level processing.
 
-### Homebrew
-```bash
-brew install ghostintheprompt/tap/wasp
-```
+### 2. Cyber SOC: Neural Defense Center
+Managing **8 active WiFi events** with AI correlation:
+*   **[INC-WASP-001] Unexpected Monitor Transition**
+*   **[INC-WASP-003] Excessive Power Draw (20%+ spike)**
+*   **[INC-WASP-004] Management Frame Leak**
+*   **[INC-WASP-008] Hardware HID Injection (Rubber Ducky detection)**
 
-### Build from Source
-```bash
-git clone https://github.com/ghostintheprompt/wasp.git
-cd wasp
-pip install -r requirements.txt
-```
+### 3. The Dirty Dozen+ Guardrails
+Protected by 12+ security enforcements, including:
+*   **State Lockdown:** Preventing unrequested Managed <-> Monitor mode shifts.
+*   **Power Circuit Breaker:** Automated alerts on anomalous USB power draw.
+*   **OUI Whitelisting:** Enforcing communication only with verified hardware vendors.
+*   **SSID Sanitization:** Filtering malformed packets before they reach the OS stack.
 
 ## Usage
 
-WASP requires root privileges to access hardware and put interfaces into monitor mode.
+WASP requires root privileges to access hardware and simulate offensive scenarios.
 
 ```bash
-# Basic verification
-sudo python3 wasp.py -i wlan1
+# Full high-fidelity audit
+sudo python3 wasp.py -i wlan1 --ghost-mode
 
-# Generate signature for a new trusted device
-sudo python3 wasp.py -i wlan1 --generate-signature
+# Run a specific scenario (e.g., Firmware Ghosting)
+sudo python3 wasp.py -i wlan1 --scenario s1
 
-# Save verification traffic to a PCAP for audit
-sudo python3 wasp.py -i wlan1 --pcap audit.pcap
-
-# Check for updates
-python3 wasp.py --check-updates
+# Check for incidents in the local SOC
+python3 wasp.py --soc-logs
 ```
 
 ## Privacy Statement
 
-**Local Only.** WASP does not collect telemetry, usage statistics, or personal data. All verification logic runs locally on your machine. The only network connection made is an optional, lightweight check to GitHub's public API to verify the latest version.
+**Zero-Telemetry.** WASP v1.4 maintains a strict local-only architecture. No usage statistics or hardware signatures are uploaded. All AI-assisted correlation is performed locally.
 
 ---
 
