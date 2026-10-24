@@ -1,51 +1,16 @@
 # Building WASP
 
-Follow these instructions to build and run WASP from source.
-
-## Prerequisites
-
-- Python 3.8 or higher
-- `pip` (Python package manager)
-- `libpcap` (usually pre-installed on macOS/Linux)
-
-## 1. Clone the Repository
+Use Python 3.8 or later. A virtual environment keeps the capture dependencies separate from system Python.
 
 ```bash
-git clone https://github.com/ghostintheprompt/wasp.git
-cd wasp
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+python -m pip install pytest
+python -m pytest -q
+python wasp.py --help
 ```
 
-## 2. Install Dependencies
+Offline replay requires no root. Live capture requires Scapy capture support, suitable OS permissions and a compatible interface. WASP does not configure monitor mode. Linux mode observation requires `iw`; USB inventory requires `lsusb` on Linux or `system_profiler` on macOS. Missing commands produce unavailable results.
 
-It is recommended to use a virtual environment.
-
-```bash
-# Optional: Create and activate virtual environment
-python3 -m venv venv
-source venv/bin/activate
-
-# Install required packages
-pip install -r requirements.txt
-```
-
-## 3. First Launch Instructions
-
-WASP requires root privileges for most operations.
-
-```bash
-sudo python3 wasp.py --interface wlan0
-```
-
-## Troubleshooting
-
-- **Scapy Warnings:** If you see `No libpcap provider found`, ensure `libpcap` is installed (`brew install libpcap` on macOS).
-- **macOS Airport Tool:** Ensure the `airport` utility is in your path or linked:
-  `sudo ln -s /System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources/airport /usr/local/bin/airport`
-
-## Creating a DMG (macOS)
-
-To package WASP as a DMG, use the provided script:
-
-```bash
-./make_dmg.sh
-```
+For macOS packaging, install PyInstaller into the same environment and run `./make_dmg.sh`. Packaging was not exercised in the October 24 audit. Do not describe the old 1.0.0 DMG as a tested build of the current source.

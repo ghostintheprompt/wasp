@@ -1,36 +1,25 @@
-# WASP: WiFi Adapter Security Protocol - Technical Guide
+# WASP Technical Guide
 
-Welcome to the **Ghost-Protocol Tier** of wireless hardware auditing. This guide provides the deep technical research and theory behind the WASP framework.
+The useful boundary is between an observed packet and an explanation of its origin. WASP can count and inspect the packet. A suspicious address alone cannot prove a firmware implant.
 
-## 1. High-Fidelity Scenarios (The Offensive Logic)
+## Packet checks
 
-### [s1] Firmware Ghosting
-*   **Theory:** Malicious firmware can inject management frames that are invisible to the host OS. This scenario monitors for frames with null or unauthorized OUIs (00:00:00) and specific 802.11 sub-types that suggest C2 activity.
-*   **Action:** WASP uses `scapy` to sniff management frames and parses the `RadioTap` header for anomalies in frame length and encryption bitmasks.
+`s1` considers management frames only (`Dot11.type == 0`) and reports zero-prefix transmitters. It does not inspect RadioTap encryption bitmasks or determine whether a frame was hidden from the host.
 
-### [s2] Shadow Monitor Mode
-*   **Theory:** An adapter can be put into monitor mode by an attacker via a kernel-level hook without updating the OS networking stack's reported state.
-*   **Action:** WASP performs a "State Persistence" check by polling the hardware registers directly (via `iw` or `airport`) and contrasting it against the reported driver state.
+`s4` walks captured SSID information elements. A length above 32 bytes or a mismatch between declared and available bytes produces a finding. Null bytes alone are not treated as evidence of a vulnerability. This is input inspection, not a driver exploit or a test of driver bounds checking. The earlier `CVE-2026-WASP-01` label was a project placeholder, not a verified CVE assignment, and must not be cited as a vulnerability identifier.
 
-### [s4] SSID Buffer Overflow (CVE-2026-WASP-01)
-*   **Theory:** Oversized SSID strings (exceeding 32 bytes) or those containing nested null bytes can crash legacy WiFi drivers or trigger RCE.
-*   **Action:** WASP simulates a malformed probe response to test the driver's bounds-checking integrity.
+`s8` groups beacons by integer capture timestamp and reports a threshold crossing at 100 per second across the capture. This coarse threshold has no learned baseline and can flag legitimate busy networks. Packets arriving across a second boundary can split one burst between buckets. It neither injects frames nor measures hardware buffer capacity.
 
-## 2. Cyber SOC: Neural Defense Center
+## Host observations
 
-The SOC correlates raw hardware metrics into actionable incidents.
-*   **[INC-WASP-003] Excessive Power Draw:** Uses `ioreg` (macOS) or `/sys` (Linux) to detect spikes in `milliAmps`. A 20%+ spike often indicates an active hardware implant or side-channel exfiltration in progress.
-*   **[INC-WASP-008] Hardware HID Injection:** Monitors the USB bus for the appearance of secondary HID (keyboard/mouse) interfaces from a single physical WiFi device.
+`s2` reads the Linux driver's reported interface mode using `iw`. It compares five subsequent polls with the initial reading. An unreadable initial or later mode returns `UNAVAILABLE`. A change is an observation, not proof of an unauthorized actor or a kernel hook. macOS mode observation is unavailable; no deprecated `airport` fallback is represented as a working path.
 
-## 3. The Dirty Dozen+ Guardrails
+USB inventory reads `lsusb` on Linux or structured `system_profiler` output on macOS. Vendor and product IDs must occur in the same device record. Candidate matches are not proof of ROM identity, trusted firmware, or that the matched USB device backs the selected interface.
 
-Guardrails are active enforcements that prevent logic drift during operation.
-*   **Identity Integrity:** Verifies the adapter's MAC address against the hardcoded ROM values using the `ETHTOOL_GGSO` equivalent on modern chipsets.
-*   **Power Circuit Breaker:** An automated tripwire that halts the verification process if power consumption exceeds safe research thresholds.
+The identity observation reads the selected Linux interface's reported MAC from sysfs. Power checks return `UNSUPPORTED`: no instantaneous current measurement is present. Configuration descriptors and power requests cannot stand in for measured current.
 
-## 4. Operational Requirements
-*   **Root Privileges:** Required for `libpcap` access and hardware register polling.
-*   **Monitor Mode Support:** The adapter must support `monitor mode` for behavioral audits.
+## Reporting
 
----
-*Built by MDRN Corp for the Ghost In The Prompt research initiative.*
+Cyber SOC stores timestamped findings in a local JSON array. An unreadable ledger fails explicitly rather than being silently overwritten. The ledger is not signed, tamper-evident, or a concurrent multi-writer database. There is no neural correlation model.
+
+Packet checks share the captured packet batch during a full live run. Empty or non-802.11 captures report the relevant checks as unavailable. `NO_FINDINGS` means the check found nothing in that observation window. Full assessments remain `OBSERVATIONS_ONLY`.

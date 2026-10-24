@@ -2,70 +2,65 @@
   <img src="assets/wasp_logo.png" alt="WASP Logo" width="500">
 </p>
 
-# WASP: WiFi Adapter Security Protocol (Ghost-Protocol Tier)
+# WASP: WiFi Adapter Security Protocol
 
-**WASP** is a high-fidelity verification framework for auditing the integrity and security of wireless network adapters. Optimized with the **Ghost Proxy** methodology, WASP goes beyond simple hardware identification to provide deep-behavioral analysis and offensive-scenario simulation.
+**Ghost-Protocol research bench. Passive observations, with the limits in the report.**
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux-lightgrey)](#)
-[![Release](https://img.shields.io/badge/release-v1.4.0-purple.svg)](https://github.com/ghostintheprompt/wasp/releases)
+WASP inspects captured 802.11 frames, watches Linux interface-mode changes, inventories USB IDs, and records findings locally. It does not attest firmware, inspect kernel hooks, block packets, measure USB current, or certify an adapter as safe. The `ThreatSimulator` and `GuardrailEngine` class names remain for compatibility; their implemented methods are observation-only.
 
-## Why WASP v1.4?
+## Working checks
 
-In 2026, compromised hardware is no longer a fringe threat—it's an industrial standard. New and second-hand network equipment can contain malicious firmware, shadow DOM-style overlays in the driver, or unauthorized hardware-level exfiltration. WASP v1.4 introduces the **Ghost-Protocol Optimization**, bridging the gap between hardware audit and offensive security research.
+| Scenario | Mechanism | Boundary |
+|---|---|---|
+| `s1` Firmware Ghosting | Flags management-frame transmitters beginning `00:00:00` | Address heuristic, not firmware inspection or an OUI allowlist |
+| `s2` Shadow Monitor | Reads `iw dev <interface> info` five times after an initial reading | Linux only; observes a change without attributing its cause |
+| `s4` SSID length | Checks captured SSID elements for lengths above 32 bytes or declared/actual length mismatch | No probe transmission, driver crash test, or resilience result |
+| `s8` Beacon rate | Flags 100 or more beacons in one capture-time second | Aggregate rate heuristic, not buffer-load measurement or flood prevention |
 
-## Core Modules
+The USB inventory matches candidate vendor/product IDs within one device record. It does not associate that device with the selected network interface. `signatures.json` contains candidate labels inherited from the original project, not authenticated chipset, firmware or device-integrity evidence. No trusted firmware hash database is provided.
 
-| Module | Capability | Persistence |
-| :--- | :--- | :--- |
-| **THREAT_SIMULATOR** | executes 12 high-fidelity WiFi scenarios (e.g., Firmware Ghosting) | Volatile |
-| **CYBER_SOC** | Neural Defense Center tracking 8 unique WiFi incidents (INC-...) | Session |
-| **GUARDRAIL_ENGINE** | Enforces the "Dirty Dozen+" security policies in real-time | Active |
-| **BEHAVIOR_AUDIT** | Monitors packet patterns and USB power for covert channels | Local DB |
+Cyber SOC is a JSON incident ledger, not an AI correlation system. Guardrail checks expose the reported Linux interface MAC where available and explicitly report power measurement as unsupported. No hardware state is changed.
 
-## Ghost Proxy Manifest v1.4 (WASP Edition)
+## Run it
 
-### 1. High-Fidelity WiFi Scenarios
-The simulator now executes **12 specialized scenarios**:
-*   **Firmware Ghosting:** Detecting hidden frames or unauthorized vendor-specific OUI usage.
-*   **Shadow Monitor Mode:** Identifying unrequested hardware-level state shifts.
-*   **SSID Buffer Overflow:** Testing driver resilience against malformed SSID strings.
-*   **OUI Identity Hijack:** Verifying hardware ID persistence under extreme load.
-*   **Timing Attack Analysis:** Spotting micro-delays that indicate hardware-level processing.
-
-### 2. Cyber SOC: Neural Defense Center
-Managing **8 active WiFi events** with AI correlation:
-*   **[INC-WASP-001] Unexpected Monitor Transition**
-*   **[INC-WASP-003] Excessive Power Draw (20%+ spike)**
-*   **[INC-WASP-004] Management Frame Leak**
-*   **[INC-WASP-008] Hardware HID Injection (Rubber Ducky detection)**
-
-### 3. The Dirty Dozen+ Guardrails
-Protected by 12+ security enforcements, including:
-*   **State Lockdown:** Preventing unrequested Managed <-> Monitor mode shifts.
-*   **Power Circuit Breaker:** Automated alerts on anomalous USB power draw.
-*   **OUI Whitelisting:** Enforcing communication only with verified hardware vendors.
-*   **SSID Sanitization:** Filtering malformed packets before they reach the OS stack.
-
-## Usage
-
-WASP requires root privileges to access hardware and simulate offensive scenarios.
+Use Python 3.8 or later and install Scapy in a virtual environment:
 
 ```bash
-# Full high-fidelity audit
-sudo python3 wasp.py -i wlan1 --ghost-mode
-
-# Run a specific scenario (e.g., Firmware Ghosting)
-sudo python3 wasp.py -i wlan1 --scenario s1
-
-# Check for incidents in the local SOC
-python3 wasp.py --soc-logs
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
 ```
 
-## Privacy Statement
+Replay a capture without root or RF transmission:
 
-**Zero-Telemetry.** WASP v1.4 maintains a strict local-only architecture. No usage statistics or hardware signatures are uploaded. All AI-assisted correlation is performed locally.
+```bash
+python wasp.py --pcap capture.pcap --scenario s4
+```
 
----
+Omit `--scenario` to run all three packet checks against the capture. Offline mode does not inspect the host adapter. Live capture requires a compatible capture interface and appropriate privileges; WASP does not enable monitor mode:
+
+```bash
+sudo .venv/bin/python wasp.py --interface wlan1 --ghost-mode
+```
+
+Live capture collects up to 500 packets over 10 seconds. Mode observation adds five polls. Ethernet-formatted captures cannot establish 802.11 management-frame findings. macOS can provide USB inventory, but WASP currently has no macOS mode observer.
+
+```bash
+python wasp.py --soc-logs
+python -m pip install pytest
+python -m pytest -q
+```
+
+Reports default to `wasp_verification_report.json`; the ledger defaults to `wasp_incidents.json`. Override them with `--report` and `--incidents`. Exit codes are `0` for completed requested observations without findings, `1` for findings, and `2` for unavailable/unsupported checks or input errors. Zero is not a hardware-safety verdict. Full reports say `OBSERVATIONS_ONLY`; individual checks distinguish `FINDING`, `NO_FINDINGS`, `OBSERVED`, `UNAVAILABLE`, and `UNSUPPORTED`.
+
+## Verification and scope
+
+The automated suite uses constructed Scapy frames, PCAP replay, mocked platform command output, and CLI subprocesses. It checks both detection and benign cases. This audit did not exercise a physical USB adapter, live RF capture, Linux `iw`, or the macOS packaging process. The old 1.0.0 DMG predates this implementation and is not a validated build of it.
+
+The original 12-scenario and 12-policy design remains in [features.md](features.md) as a roadmap with implementation status. It is not a list of shipped capabilities. See [WASP_GUIDE.md](WASP_GUIDE.md) for the implemented mechanics.
+
+## Privacy
+
+No network API or AI service is called by WASP. Capture data and findings remain in local files unless you move them. Live capture reads the selected interface; it does not inject traffic.
 
 **Built by [MDRN Corp](https://mdrn.app)**
