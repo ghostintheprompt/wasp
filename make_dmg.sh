@@ -1,10 +1,12 @@
 #!/bin/bash
+set -euo pipefail
+cd "$(dirname "$0")"
 
 # WASN DMG Creation Script
 # Requires pyinstaller
 
 APP_NAME="WASP"
-VERSION="1.0.0"
+VERSION=$(python3 -c 'import wasp; print(wasp.VERSION)')
 DIST_DIR="dist"
 BUILD_DIR="build"
 DMG_NAME="WASP_${VERSION}.dmg"
@@ -14,11 +16,8 @@ echo "[+] Starting build process for ${APP_NAME} v${VERSION}..."
 # Clean previous builds
 rm -rf "${DIST_DIR}" "${BUILD_DIR}" *.spec "${DMG_NAME}"
 
-# Install pyinstaller if missing
-if ! python3 -m PyInstaller --version &> /dev/null; then
-    echo "[*] Installing PyInstaller..."
-    python3 -m pip install pyinstaller
-fi
+# Install PyInstaller explicitly in the active environment before packaging.
+python3 -m PyInstaller --version >/dev/null
 
 # Create standalone binary
 echo "[+] Creating binary..."

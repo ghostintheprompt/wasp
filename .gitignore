@@ -1,0 +1,13 @@
+.DS_Store
+.venv/
+venv/
+__pycache__/
+.pytest_cache/
+*.pyc
+*.dmg
+*.spec
+build/
+dist/
+wasp_incidents.json
+wasp_verification_report.json
+test_incidents.json
